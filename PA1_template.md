@@ -18,42 +18,111 @@ output:
 In this first step, we will load the data and prepare the data for further
 analysis.
 
-```{r libraries, echo=TRUE}
+
+```r
 library(data.table)
 library(ggplot2)
 library(lubridate)
 ```
 
+```
+## Warning in system("timedatectl", intern = TRUE): running command 'timedatectl'
+## had status 1
+```
+
+```
+## 
+## Attaching package: 'lubridate'
+```
+
+```
+## The following objects are masked from 'package:data.table':
+## 
+##     hour, isoweek, mday, minute, month, quarter, second, wday, week,
+##     yday, year
+```
+
+```
+## The following objects are masked from 'package:base':
+## 
+##     date, intersect, setdiff, union
+```
+
 Loading the data:
-```{r loading, echo=TRUE}
+
+```r
 activity <- read.table(unzip("activity.zip"), header=TRUE, sep = ",")
 activity <- as.data.table(activity)
 
 head(activity)
 ```
+
+```
+##    steps       date interval
+## 1:    NA 2012-10-01        0
+## 2:    NA 2012-10-01        5
+## 3:    NA 2012-10-01       10
+## 4:    NA 2012-10-01       15
+## 5:    NA 2012-10-01       20
+## 6:    NA 2012-10-01       25
+```
 Since the date is stored as a character column, it would have to be combined
 with interval to create a datetime format
 
-```{r transformation, echo=TRUE}
+
+```r
 activity[, datetime := strptime(date, "%Y-%m-%d") + minutes(interval)]
+```
+
+```
+## Warning in strptime(date, "%Y-%m-%d"): strptime() usage detected and wrapped
+## with as.POSIXct(). This is to minimize the chance of assigning POSIXlt columns,
+## which use 40+ bytes to store one date (versus 8 for POSIXct). Use as.POSIXct()
+## (which will call strptime() as needed internally) to avoid this warning.
+```
+
+```r
 head(activity)
+```
+
+```
+##    steps       date interval            datetime
+## 1:    NA 2012-10-01        0 2012-10-01 00:00:00
+## 2:    NA 2012-10-01        5 2012-10-01 00:05:00
+## 3:    NA 2012-10-01       10 2012-10-01 00:10:00
+## 4:    NA 2012-10-01       15 2012-10-01 00:15:00
+## 5:    NA 2012-10-01       20 2012-10-01 00:20:00
+## 6:    NA 2012-10-01       25 2012-10-01 00:25:00
 ```
 Also, change the format of "date" column to "date", as well.
 
-```{r transformation2, echo=TRUE}
+
+```r
 activity[, date := as.Date(date, "%Y-%m-%d")]
 head(activity)
+```
+
+```
+##    steps       date interval            datetime
+## 1:    NA 2012-10-01        0 2012-10-01 00:00:00
+## 2:    NA 2012-10-01        5 2012-10-01 00:05:00
+## 3:    NA 2012-10-01       10 2012-10-01 00:10:00
+## 4:    NA 2012-10-01       15 2012-10-01 00:15:00
+## 5:    NA 2012-10-01       20 2012-10-01 00:20:00
+## 6:    NA 2012-10-01       25 2012-10-01 00:25:00
 ```
 
 ## Step 2: What is mean total number of steps taken per day?
 
 #### Calculate the Total Number of Steps per day
-```{r meansteps, echo=TRUE}
+
+```r
 mean_steps = activity[, .(total_steps=sum(steps)), by=date]
 ```
 
 #### Create a Histogram
-```{r histogram, echo=TRUE}
+
+```r
 hist(x = mean_steps$total_steps
          , breaks = 12
          , freq = TRUE
@@ -61,7 +130,11 @@ hist(x = mean_steps$total_steps
          , xlab = "Daily Total Steps"
          , ylab = "Frequency"
          , col = "red")
+```
 
+![](PA1_template_files/figure-html/histogram-1.png)<!-- -->
+
+```r
 png("figures/histogram_raw.png", width = 480, height = 480)
 
 hist(x = mean_steps$total_steps
@@ -75,10 +148,27 @@ hist(x = mean_steps$total_steps
 dev.off()
 ```
 
+```
+## png 
+##   2
+```
+
 #### Calculate and report the mean and median of the total number of steps taken per day
-```{r MeanMedianDailySteps, echo=TRUE}
+
+```r
 mean(mean_steps$total_steps, na.rm = TRUE)
+```
+
+```
+## [1] 10766.19
+```
+
+```r
 median(mean_steps$total_steps, na.rm = TRUE)
+```
+
+```
+## [1] 10765
 ```
 The mean daily steps is 10,766
 
@@ -86,7 +176,8 @@ The median daily steps is 10,765
 
 ## Step 3: What is the average daily activity pattern?
 
-```{r 5MinuteIntervalAverages, echo=TRUE}
+
+```r
 interval_averages = activity[, .(mean_steps=mean(steps, na.rm = TRUE)), by=interval]
 ```
 
@@ -95,7 +186,8 @@ interval_averages = activity[, .(mean_steps=mean(steps, na.rm = TRUE)), by=inter
 Create a 5-minute time series plot (x-axis) and the average number of steps
 across all all days (y-axis)
 
-```{r 5MinuteIntervalPlot, echo=TRUE}
+
+```r
 plot(interval_averages$interval
      , na.omit(interval_averages$mean_steps)
      , type = "l"
@@ -103,7 +195,11 @@ plot(interval_averages$interval
      , xlab = "5-Minute Interval"
      , main = "Average Number of Steps by Interval"
 )
+```
 
+![](PA1_template_files/figure-html/5MinuteIntervalPlot-1.png)<!-- -->
+
+```r
 png("figures/lineplot.png", width = 480, height = 480)
 
 plot(interval_averages$interval
@@ -117,6 +213,11 @@ plot(interval_averages$interval
 dev.off()
 ```
 
+```
+## png 
+##   2
+```
+
 #### Interval with Max Number of Steps
 
 Interval with the max daily average number of steps (206 steps) is 835.
@@ -126,8 +227,13 @@ Interval with the max daily average number of steps (206 steps) is 835.
 ## Step 4: Imputing missing values
 
 #### Total Number of Missing Values in the dataset
-```{r TotalMissingValues, echo=TRUE}
+
+```r
 sum(is.na(activity$steps))
+```
+
+```
+## [1] 2304
 ```
 Out of the 17,568 records, 2,304 records have missing values.
 
@@ -148,13 +254,21 @@ Create a new dataset with missing data filled in
     Note: This step was completed earlier in Step 3.
 2. If any intervals have NAs for all days, then set the total steps for that
     interval to zero (0).
-```{r StrategizeIntervalsMissingsteps, echo=TRUE}
+
+```r
 interval_imputation <- as.data.table(unique(activity$interval))
 ## Rename the column 
 setnames(interval_imputation, old=c("V1"), new=c("interval"))
 ## Merge the daily average number of steps for each interval
 interval_imputation <- interval_averages[interval_imputation, on = .(interval)]
 sum(is.na(interval_imputation$mean_steps))
+```
+
+```
+## [1] 0
+```
+
+```r
 ## Round the mean_steps
 interval_imputation[, mean_steps := round(mean_steps, digits=0)]
 #interval_imputation$mean_steps <- round(interval_imputation$mean_steps, digits=0)
@@ -174,7 +288,8 @@ for (i in 1:nrow(activity_imputed)) {
 #### Histogram of daily steps
 
 1. Histogram of total steps per day.
-```{r histogramImputed, echo=TRUE}
+
+```r
 mean_steps_imputed <- activity_imputed[, .(total_steps=sum(steps)), by=date]
 
 hist(x = mean_steps_imputed$total_steps
@@ -184,7 +299,11 @@ hist(x = mean_steps_imputed$total_steps
          , xlab = "Daily Total Steps"
          , ylab = "Frequency"
          , col = "red")
+```
 
+![](PA1_template_files/figure-html/histogramImputed-1.png)<!-- -->
+
+```r
 png("figures/histogram_imputed.png", width = 480, height = 480)
 
 hist(x = mean_steps_imputed$total_steps
@@ -197,10 +316,27 @@ hist(x = mean_steps_imputed$total_steps
 
 dev.off()
 ```
+
+```
+## png 
+##   2
+```
 2. Calculate the mean and median of daily total steps.
-```{r MeanMedianDailyStepsImputed, echo=TRUE}
+
+```r
 mean(mean_steps_imputed$total_steps, na.rm = TRUE)
+```
+
+```
+## [1] 10765.64
+```
+
+```r
 median(mean_steps_imputed$total_steps, na.rm = TRUE)
+```
+
+```
+## [1] 10762
 ```
 After imputing, the mean for the daily total steps is 10,766.
 The mean has not changed, after rounding.
@@ -211,7 +347,8 @@ The median has decreased by 3 steps, after imputing.
 
 #### Indicator
 Create a factor variable with two levels - "weekday" and "weekend"
-```{r WeekendIndicator, echo=TRUE}
+
+```r
 weekendInd <- function (x) {
                 weekday <- x["DayOfWeek"]
                 weekend <- c("Sat", "Sun")
@@ -230,10 +367,28 @@ activity_imputed$weekendInd <- apply(activity_imputed, 1, weekendInd)
 #### Panel Plot
 Make a panel plot containing a type = "l" plot of the 5-minute interval(x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis). See the README file in the GitHub repository to see an example of what this plot should look like using simulated data.
 
-```{r PanelPlot, echo=TRUE}
+
+```r
 interval_averagesImputed <- activity_imputed[, .(mean_steps = mean(steps)), by=list(interval, weekendInd)]
 interval_averagesImputed
+```
 
+```
+##      interval weekendInd mean_steps
+##   1:        0    weekday  2.2888889
+##   2:        0    weekend  0.2500000
+##   3:        5    weekday  0.4000000
+##   4:        5    weekend  0.0000000
+##   5:       10    weekday  0.1555556
+##  ---                               
+## 572:     2345    weekend  0.1764706
+## 573:     2350    weekday  0.2727273
+## 574:     2350    weekend  0.0000000
+## 575:     2355    weekday  1.2272727
+## 576:     2355    weekend  0.6470588
+```
+
+```r
 theme <- theme(panel.grid.major = element_blank(),
                panel.grid.minor = element_blank(),
                panel.background = element_blank(),
@@ -256,7 +411,14 @@ gg <- gg + facet_wrap(~weekendInd)
 print(gg)
 
 dev.off()
+```
 
+```
+## png 
+##   2
+```
+
+```r
 gg <- ggplot(interval_averagesImputed)
 gg <- gg + geom_line(aes(x = interval, y = mean_steps),
                     position = "stack",
@@ -269,3 +431,5 @@ gg <- gg + ggtitle("5-Minute Interval Averages by WeekDay/WeekEnd")
 gg <- gg + facet_wrap(~weekendInd)
 print(gg)
 ```
+
+![](PA1_template_files/figure-html/PanelPlot-1.png)<!-- -->
